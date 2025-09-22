@@ -1,0 +1,111 @@
+/* Using CSS variables for easier theme management */
+:root {
+  --primary-color: #007bff;
+  --primary-color-hover: #0056b3;
+  --secondary-color: #f8f9fa;
+  --text-color: #333;
+  --border-color: #ced4da;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --header-padding: 1rem;
+  --border-radius: 8px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--header-padding);
+  background-color: #fff;
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.logo {
+  flex-shrink: 0; /* Prevents the logo from shrinking */
+}
+
+.logo img {
+  height: 40px; /* Use height for better control */
+  width: auto;
+}
+
+.contenedor-form-busqueda {
+  flex-grow: 1; /* Allows the search bar to take up available space */
+  margin: 0 2rem;
+  max-width: 500px;
+}
+
+.contenedor-form-busqueda form {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+#barra-busqueda {
+  width: 100%;
+  height: 40px;
+  padding: 0.5rem 2.5rem 0.5rem 1rem; /* Adjust padding for the icon */
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  box-shadow: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#barra-busqueda:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* The reset button is now a button element for better styling */
+#btn-reset {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: #999;
+  padding: 0 5px;
+}
+
+#btn-reset:hover {
+  color: #333;
+}
+
+.botones-i-r {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* Modern way to add space between items */
+}
+
+.botones-i-r button {
+  border: 1px solid transparent;
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.botones-i-r .login {
+  background-color: var(--secondary-color);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+.botones-i-r .login:hover {
+  background-color: #e2e6ea;
+  border-color: #dae0e5;
+}
+
+.botones-i-r .register {
+  background-color: var(--primary-color);
+  color: #fff;
+}
+
+.botones-i-r .register:hover {
+  background-color: var(--primary-color-hover);
+}

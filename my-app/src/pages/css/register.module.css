@@ -1,0 +1,308 @@
+
+.register-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100dvh;
+    background: linear-gradient(to right, #007bff, #ffffff);
+    font-family: 'Arial', sans-serif;
+}
+
+.register {
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 1rem 3rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    width: 100%;
+    max-width: 450px;
+    backdrop-filter: blur(10px);
+    position: relative;
+    transition: all .5s ease;
+    height: 90dvh;
+    overflow-y: auto;
+}
+
+.register::-webkit-scrollbar {
+    width: 8px;
+}
+
+.register::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.register::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+
+.register::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+
+.register:hover {
+    transform: scale(1.02);
+}
+
+.back-icon {
+    position: absolute;
+    top: 1.5rem;
+    left: 1.5rem;
+    font-size: 1.5rem;
+    color: #333;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.back-icon:hover {
+    color: #007bff;
+}
+
+.register h1 {
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+    color: #333;
+}
+
+.step-indicator {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+}
+
+.step-number {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #ccc;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.step.active .step-number {
+    background-color: #007bff;
+}
+
+.step.completed .step-number {
+    background-color: #28a745;
+}
+
+.step-title {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.step-indicator::before {
+    content: '';
+    position: absolute;
+    top: 15px;
+    left: 15%;
+    right: 15%;
+    height: 2px;
+    background-color: #ccc;
+    z-index: 0;
+}
+
+.form-step {
+    display: none;
+}
+
+.form-step.active {
+    display: block;
+}
+
+.register form {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-wrapper {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.input-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #aaa;
+}
+
+.register form input {
+    padding: 1rem 1rem 1rem 40px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.button-group {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+}
+
+.register form button {
+    padding: 1rem;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    width: 48%;
+}
+
+.register form button:hover {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+}
+
+.register form button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.register form button.prev-btn {
+    background-color: #6c757d;
+}
+
+.register form button.prev-btn:hover {
+    background-color: #5a6268;
+}
+
+.email-input-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.email-input-group .input-wrapper {
+    flex-grow: 1;
+    margin-bottom: 0;
+}
+
+.email-input-group button {
+    margin-left: 1rem;
+    padding: 1rem;
+    width: auto;
+    white-space: nowrap;
+}
+
+.email-verification {
+    margin-top: 1.5rem;
+}
+
+.message-error {
+    color: red;
+    font-size: 0.9rem;
+    margin-top: -1rem;
+    margin-bottom: 1rem;
+}
+
+.register p {
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.register p a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.register p a:hover {
+    text-decoration: underline;
+}
+
+/* Spinner de carga */
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Opcional: Estilo para el input mientras se verifica */
+.email-verification input:disabled {
+    cursor: wait;
+    background-color: #f0f0f0;
+}
+
+/* Spinner de carga */
+.spinner {
+    animation: spin 1s linear infinite;
+    margin-right: 8px; /* Espacio entre el spinner y el texto */
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Estilos para la guía de contraseña */
+.password-guide {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f7f7f7;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.password-guide p {
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    color: #555;
+}
+
+.password-guide ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.password-guide li {
+    display: flex;
+    align-items: center;
+    font-size: 0.9em;
+    margin-bottom: 5px;
+}
+
+.password-guide .valid svg {
+    color: green;
+    margin-right: 8px;
+}
+
+.password-guide .invalid svg {
+    color: #a0a0a0;
+    margin-right: 8px;
+}
