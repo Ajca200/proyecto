@@ -6,22 +6,6 @@ import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import Swal from 'sweetalert2'; // Importamos SweetAlert2
 
-// Función para obtener la cookie CSRF
-const getCookie = (name) => {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.startsWith(name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
-            }
-        }
-    }
-    return cookieValue;
-}
-
 const FormLogin = () => {
     const [formData, setFormData] = useState({
         correo: '',
@@ -78,9 +62,8 @@ const FormLogin = () => {
                 method: 'POST',
                 headers: {
                     "Content-Type": "application/json",
-                    "X-CSRFToken": getCookie("csrftoken")
                 },
-                //credentials: "include",
+                credentials: "include", // 🔑 asegura que la cookie sessionid viaje
                 body: JSON.stringify(formData)
             });
 
@@ -91,17 +74,24 @@ const FormLogin = () => {
                 Swal.fire({
                     icon: 'error',
                     title: 'Error de inicio de sesión',
-                    text: data.message || "Credenciales inválidas."
+                    text: data.error || "Credenciales inválidas."
                 });
             } else {
-                // Mensaje de éxito
+                // ✅ Guardar csrfToken en cookie para futuros requests
+                if (data.csrfToken) {
+                    document.cookie = `csrftoken=${data.csrfToken}; path=/`;
+                }
+
                 Swal.fire({
                     icon: 'success',
                     title: '¡Bienvenido!',
-                    text: data.message || 'Inicio de sesión exitoso.'
+                    text: data.exito || 'Inicio de sesión exitoso.'
                 });
 
-                window.location.replace('/dashboard')
+                // 🔑 Aquí también podrías guardar datos del usuario en estado/contexto si los necesitas
+                console.log("Usuario logueado:", data.usuario);
+
+                window.location.replace('/dashboard');
             }
 
         } catch (error) {
@@ -114,6 +104,7 @@ const FormLogin = () => {
         } finally {
             setIsLoading(false);
         }
+
     };
 
     return (
