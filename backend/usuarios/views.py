@@ -9,6 +9,10 @@ from psycopg2.errors import UniqueViolation
 import os
 import secrets
 import yagmail
+from django.conf import settings
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+import json
 from .serializers import UsuarioSerializer, LoginSerializer
 from django.shortcuts import redirect
 from functools import wraps
@@ -358,6 +362,9 @@ class ActualizarItemView(APIView):
         id_producto = request.data.get("id_producto")
         nueva_cantidad = request.data.get("cantidad")
 
+        print(id_producto)
+        print(nueva_cantidad)
+
         if not usuario:
             return Response({"error": "No autenticado"}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -456,3 +463,292 @@ class DireccionesView(APIView):
         except DatabaseError as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+    # endpont para agregar una direccion
+    def post(self, request):
+        usuario = request.session.get('usuario')
+
+        if not usuario:
+            return Response({"error": "Usuario no autenticado"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        alias = request.data.get("alias")
+        direccion = request.data.get("direccion_completa")
+        parroquia_id = request.data.get("parroquia_id")
+
+        try:
+            with connection.cursor() as cursor:
+                # Obtener el id del usuario usando el correo
+                cursor.execute("SELECT id_usuario FROM datos_usuario.usuarios WHERE correo = %s", [usuario["correo"]])
+                resultado_usuario = cursor.fetchone()
+
+                if not resultado_usuario:
+                    return Response({"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+                id_usuario = resultado_usuario[0]
+
+                # Registrar la dirección
+                cursor.execute(
+                    "SELECT * FROM datos_usuario.registrar_direccion(%s, %s, %s, %s)",
+                    [direccion, parroquia_id, id_usuario, alias]
+                )
+                resultado = cursor.fetchone()
+
+                if resultado:
+                    return Response({"Exito": "La direccion ha sido ingresada exitosamente"}, status=200)
+                else:
+                    return Response({"error": "No se pudo registrar la dirección"}, status=status.HTTP_400_BAD_REQUEST)
+        except DatabaseError as e:
+            print(e)
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+# endpoint para obtener las direcciones de usuario
+class DireccionesUsuarioView(APIView):
+    def get(self, request):
+        usuario = request.session.get("usuario")
+
+        if not usuario:
+            return Response({"error": "Usuario no autenticado"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            with connection.cursor() as cursor:
+                # Obtener el id del usuario usando el correo
+                cursor.execute("SELECT id_usuario FROM datos_usuario.usuarios WHERE correo = %s", [usuario["correo"]])
+                resultado_usuario = cursor.fetchone()
+
+                if not resultado_usuario:
+                    return Response({"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+                id_usuario = resultado_usuario[0]
+
+                # Llamar a la función SQL para obtener las direcciones del usuario
+                cursor.execute("SELECT * FROM datos_usuario.obtener_direcciones_por_usuario(%s)", [id_usuario])
+                direcciones = cursor.fetchall()
+
+                lista_direcciones = []
+                for direccion in direcciones:
+                    lista_direcciones.append({
+                        "id_direccion": direccion[0],
+                        "direccion_completa": direccion[1],
+                        "parroquia_fk": direccion[2],
+                        "usuario_fk": direccion[3],
+                        "alias": direccion[5],
+                        "mensaje": direccion[4]
+                    })
+
+                return Response(lista_direcciones, status=status.HTTP_200_OK)
+        except DatabaseError as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    def put(self, request):
+        usuario = request.session.get("usuario")
+
+        if not usuario:
+            return Response({"error": "Usuario no autenticado"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        alias_new = request.data.get('alias')
+        direccion_c_new = request.data.get('direccion_completa')
+        parroquia_new = request.data.get('parroquia_id')
+        direccion_id = request.data.get('id_direccion')
+        
+        try:
+            with connection.cursor() as cursor:
+                # Obtener el id del usuario usando el correo
+                cursor.execute("SELECT id_usuario FROM datos_usuario.usuarios WHERE correo = %s", [usuario["correo"]])
+                resultado_usuario = cursor.fetchone()
+
+                if not resultado_usuario:
+                    return Response({"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+                id_usuario = resultado_usuario[0]
+
+                cursor.execute("SELECT * FROM datos_usuario.editar_direccion_usuario(%s, %s, %s, %s, %s)", [direccion_id, id_usuario, direccion_c_new, parroquia_new, alias_new])
+
+                resultado = cursor.fetchone()[0]
+
+                if resultado:
+                    return Response({"Exito": "La direccion ha sido editada exitosamente."}, status=200)
+                
+                return Response({"Error": "Ha ocurrido un error al editar la direccion. Por favor intente nuevamente."}, status=400)
+        except DatabaseError as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    def delete(self, request):
+        usuario = request.session.get("usuario")
+
+        if not usuario:
+            return Response({"error": "Usuario no autenticado"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        direccion_id = request.data.get('id_direccion')
+
+        try:
+            with connection.cursor() as cursor:
+                # Obtener el id del usuario usando el correo
+                cursor.execute("SELECT id_usuario FROM datos_usuario.usuarios WHERE correo = %s", [usuario["correo"]])
+                resultado_usuario = cursor.fetchone()
+
+                if not resultado_usuario:
+                    return Response({"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+                id_usuario = resultado_usuario[0]
+
+                cursor.execute("SELECT * FROM datos_usuario.eliminar_direccion_usuario(%s, %s)", [direccion_id, id_usuario])
+
+                resultado = cursor.fetchone()[0]
+
+                if resultado:
+                    return Response({"Exito": "La direccion ha sido eliminada exitosamente."}, status=200)
+                
+                return Response({"Error": "Ha ocurrido un error al eliminar la direccion. Por favor intente nuevamente."}, status=400)
+        except DatabaseError as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class PagoView(APIView):
+    def post(self, request):
+        usuario = request.session.get("usuario")
+
+        if not usuario:
+            return Response({"error": "Usuario no autenticado"}, status=status.HTTP_401_UNAUTHORIZED)
+        
+
+        pago = request.data.get("total")
+        pago_total = float(pago) + (float(pago) * 0.16)
+        estado = "Procesando"
+        comprobante = request.FILES.get("receipt")
+        direccion = request.data.get("address_id")
+        metodo = request.data.get("method")
+        num_ref = request.data.get("reference_number")
+        correo_origen = request.data.get("source_email")
+
+        tiempoTemp = datetime.now()
+        nombre_relativo = tiempoTemp.strftime("%Y-%m-%d_%H-%M-%S")
+        extension = comprobante.name.split('.')[-1].lower()
+
+        if not comprobante:
+            return Response({"Error": "Imagen no proporcionada"}, status=400)
+        
+        ruta_relativa = f"imagenes/{nombre_relativo}.{extension}"
+        ruta_absoluta = os.path.join(settings.MEDIA_ROOT, ruta_relativa)
+
+        try:
+            with connection.cursor() as cursor:
+                # Obtener el id del usuario usando el correo
+                cursor.execute("SELECT id_usuario FROM datos_usuario.usuarios WHERE correo = %s", [usuario["correo"]])
+                resultado_usuario = cursor.fetchone()
+
+                if not resultado_usuario:
+                    return Response({"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+                id_usuario = resultado_usuario[0]
+
+                cursor.execute("SELECT * FROM datos_tienda.crear_orden(%s, %s, %s, %s, %s, %s, %s, %s)", [id_usuario, estado, pago_total, direccion, ruta_absoluta, metodo, num_ref, correo_origen])
+
+                resultado = cursor.fetchone()[0]
+
+                if resultado:
+                    default_storage.save(ruta_relativa, ContentFile(comprobante.read()))
+
+                    items_string = request.data.get("items")
+                    items = json.loads(items_string)
+
+                    for item in items:
+                        precio_unitario = item['pco'] + (item['pco'] * 0.16)
+
+                        cursor.execute("SELECT * FROM datos_tienda.registrar_items(%s, %s, %s, %s)", [resultado, item['id'], item['qty'], precio_unitario])
+                        
+                        cursor.execute("SELECT * FROM datos_tienda.carritos WHERE usuario_fk = %s", [id_usuario])
+                        id_carrito = cursor.fetchone()[0]
+
+                        cursor.execute("SELECT * FROM datos_tienda.eliminar_item_carrito(%s, %s)", [item['id'], id_carrito])
+                        resultado2 = cursor.fetchone()[0]
+
+                    if resultado2:
+                        return Response({"Exito": "La orden fue procesada exitosamente"}, status=200)
+
+        except DatabaseError as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class UltimaCompraView(APIView):
+    def get(self, request):
+        usuario = request.session.get("usuario")
+
+        if not usuario:
+            return Response({"error": "Usuario no autenticado"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            with connection.cursor() as cursor:
+                # Obtener el id del usuario usando el correo
+                cursor.execute("SELECT id_usuario FROM datos_usuario.usuarios WHERE correo = %s", [usuario["correo"]])
+                resultado_usuario = cursor.fetchone()
+
+                if not resultado_usuario:
+                    return Response({"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+                id_usuario = resultado_usuario[0]
+
+                # Llamar a la función SQL para obtener la última compra
+                cursor.execute("SELECT * FROM datos_tienda.obtener_ultima_compra(%s)", [id_usuario])
+                ultima_compra = cursor.fetchone()
+
+                print(ultima_compra)
+
+                if not ultima_compra:
+                    return Response({"mensaje": "No se encontraron compras para este usuario."}, status=status.HTTP_404_NOT_FOUND)
+
+                # Formatear la respuesta
+                compra_formateada = {
+                    "id": ultima_compra[0],
+                    "fecha": ultima_compra[1].strftime('%Y-%m-%d'),
+                    "total": float(ultima_compra[2]),
+                    "estado": ultima_compra[3]
+                }
+
+                return Response(compra_formateada, status=status.HTTP_200_OK)
+
+        except DatabaseError as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class ObtenerOrdenesUsuarioView(APIView):
+    def get(self, request):
+        usuario = request.session.get("usuario")
+
+        if not usuario:
+            return Response({"error": "Usuario no autenticado"}, status=status.HTTP_401_UNAUTHORIZED)
+
+        try:
+            with connection.cursor() as cursor:
+                # Obtener el id del usuario usando el correo
+                cursor.execute("SELECT id_usuario FROM datos_usuario.usuarios WHERE correo = %s", [usuario["correo"]])
+                resultado_usuario = cursor.fetchone()
+
+                if not resultado_usuario:
+                    return Response({"error": "Usuario no encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+                id_usuario = resultado_usuario[0]
+
+                # Llamar a la función SQL para obtener las órdenes del usuario
+                cursor.execute("SELECT * FROM datos_tienda.obtener_ordenes_usuario(%s)", [id_usuario])
+                ordenes = cursor.fetchall()
+
+                lista_ordenes = []
+                for orden in ordenes:
+                    lista_ordenes.append({
+                        "id_orden": orden[0],
+                        "fecha": orden[1].strftime('%Y-%m-%d'),
+                        "estado": orden[2],
+                        "total": float(orden[3]),
+                        "direccion": orden[4],
+                        "metodo": orden[5],
+                        "referencia": orden[6]
+                    })
+
+                return Response(lista_ordenes, status=status.HTTP_200_OK)
+
+        except DatabaseError as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class CerrarSesionView(APIView):
+    def post(self, request):
+        try:
+            request.session.flush()
+            return Response({"mensaje": "Sesión cerrada exitosamente"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

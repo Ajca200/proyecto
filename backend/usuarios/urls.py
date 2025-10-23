@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import EnviarCodigoVerificacion, VerificarCodigo, CrearUsuario, LoginView, PerfilView, ObtenerProductos, VerCarritoView, AgregarItemCarritoView, CrearCarritoView, ActualizarItemView, EliminarItemView, DireccionesView
+from .views import EnviarCodigoVerificacion, VerificarCodigo, CrearUsuario, LoginView, PerfilView, ObtenerProductos, VerCarritoView, AgregarItemCarritoView, CrearCarritoView, ActualizarItemView, EliminarItemView, DireccionesView, DireccionesUsuarioView, PagoView, UltimaCompraView, ObtenerOrdenesUsuarioView, CerrarSesionView
 
 urlpatterns = [
     path('enviar-code/', EnviarCodigoVerificacion.as_view(), name='codigo de verificacion de correo electronico'),
@@ -14,4 +14,9 @@ urlpatterns = [
     path('carrito/actualizar-item/', ActualizarItemView.as_view(), name='actualizar item del carrito'),
     path('carrito/eliminar-item/', EliminarItemView.as_view(), name='eliminar item del carrito'),
     path('direcciones/', DireccionesView.as_view(), name='gestionar direcciones del usuario'),
+    path('direcciones/usuario/', DireccionesUsuarioView.as_view(), name='direccion registrada del usuario'),
+    path('payment/', PagoView.as_view(), name='gestion de pagos'),
+    path('ultima-compra/', UltimaCompraView.as_view(), name='ultima-compra'),
+    path('historial-ordenes/', ObtenerOrdenesUsuarioView.as_view(), name='historial-ordenes'),
+    path('cerrar-sesion/', CerrarSesionView.as_view(), name='cerrar-sesion'),
 ]
